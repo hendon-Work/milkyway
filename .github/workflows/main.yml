@@ -27,6 +27,10 @@ jobs:
         python -m pip install --upgrade pip
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
+    - name: Create Google Key File
+      run: |
+        echo '${{ secrets.GOOGLE_SHEETS_CREDS }}' > google_key.json
+
     # 4. (선택) 코드가 잘 돌아가는지 테스트합니다.
     # 현재는 버전 확인만 하지만, 나중에 실행할 파일명(예: main.py)으로 바꾸면 됩니다.
     - name: Run Script

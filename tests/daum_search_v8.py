@@ -17,6 +17,7 @@ import os
 import requests  # 알림 전송
 
 # --- 구글 시트 및 AI 라이브러리 (기존 유지) ---
+import json
 import gspread
 from google.oauth2.service_account import Credentials
 import google.generativeai as genai
@@ -109,10 +110,49 @@ def log_test_result(driver, number, category, depth1, depth2, depth3, depth4, de
         print("--- 실패 처리 종료 ---")
 
 def write_results_to_gsheet(results, dev_name, device_model, plat_ver, app_pkg, app_ver, start_ts, end_ts, tester_name, script_name):
-    # ... (기존 구글 시트 로직 유지) ...
-    # 단, GitHub Actions 환경에서는 인증 파일(.json)이 없으면 에러가 나므로 예외 처리 필수
-    print("⚠️ GitHub Actions 환경에서는 구글 시트 인증 파일이 없으면 저장이 건너뛰어집니다.")
-    return
+    print("\n--- Google Sheets에 결과 저장 시작 ---")
+    
+    # 1. GitHub Actions에서 만든 키 파일 이름
+    json_file_name = 'google_key.json' 
+
+    if not os.path.exists(json_file_name):
+        print(f"❌ 오류: 인증 파일({json_file_name})이 없습니다. GitHub Secrets 설정을 확인하세요.")
+        return
+
+    try:
+        # 2. 구글 시트 인증 및 연결
+        scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
+        creds = ServiceAccountCredentials.from_json_keyfile_name(json_file_name, scope)
+        client = gspread.authorize(creds)
+        
+        # 3. 시트 열기 (시트 이름이 정확해야 합니다!)
+        # 주의: 이 시트가 'Service Account 이메일'에게 공유되어 있어야 합니다.
+        spreadsheet = client.open(SPREADSHEET_NAME) 
+        
+        # 4. 새 워크시트 생성 (이름: 날짜_시간)
+        sheet_name = datetime.now().strftime('%Y%m%d_%H%M%S')
+        worksheet = spreadsheet.add_worksheet(title=sheet_name, rows=len(results)+5, cols=10)
+        
+        # 5. 헤더 추가
+        headers = ["번호", "카테고리", "기대결과", "실행결과", "실행시간", "비고"]
+        worksheet.append_row(headers)
+        
+        # 6. 데이터 한 줄씩 추가
+        for res in results:
+            row = [
+                res.get("번호", ""),
+                res.get("테스트 분류", ""),
+                res.get("Expected Result", ""),
+                res.get("Result", ""),
+                res.get("실행 시간", ""),
+                "자동화 테스트"
+            ]
+            worksheet.append_row(row)
+            
+        print(f"✅ 구글 시트 저장 완료! (시트명: {sheet_name})")
+
+    except Exception as e:
+        print(f"❌ 구글 시트 저장 중 에러 발생: {e}")
 
 # --- [웹 전용] 검색 홈으로 이동 함수 ---
 def navigate_to_home(driver):
