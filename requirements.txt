@@ -5,3 +5,4 @@ pillow
 Appium-Python-Client
 gspread
 oauth2client
+google-generativeai
