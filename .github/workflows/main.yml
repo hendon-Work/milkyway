@@ -1,0 +1,35 @@
+name: Python Project CI
+
+# main 브랜치에 코드가 올라오거나(push), 합쳐달라는 요청(PR)이 오면 실행됩니다.
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest # 최신 리눅스 환경에서 실행
+
+    steps:
+    # 1. 저장소의 코드를 내려받습니다.
+    - uses: actions/checkout@v3
+
+    # 2. 파이썬을 설치합니다 (버전 3.9)
+    - name: Set up Python 3.9
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.9"
+
+    # 3. 작성하신 requirements.txt를 읽어서 라이브러리들을 설치합니다.
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+    # 4. (선택) 코드가 잘 돌아가는지 테스트합니다.
+    # 현재는 버전 확인만 하지만, 나중에 실행할 파일명(예: main.py)으로 바꾸면 됩니다.
+    - name: Run Script
+      run: |
+        echo "라이브러리 설치가 완료되었습니다!"
+        python --version
