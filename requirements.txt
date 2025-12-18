@@ -3,3 +3,5 @@ requests
 selenium
 pillow
 Appium-Python-Client
+gspread
+oauth2client
