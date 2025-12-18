@@ -31,4 +31,4 @@ jobs:
     # 현재는 버전 확인만 하지만, 나중에 실행할 파일명(예: main.py)으로 바꾸면 됩니다.
     - name: Run Script
       run: |
-        python main.py
+        python daum(and)_Serch_8.3.1_251217.py
