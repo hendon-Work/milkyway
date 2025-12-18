@@ -61,7 +61,7 @@ if not os.path.exists(LOG_ARTIFACTS_DIR):
     os.makedirs(LOG_ARTIFACTS_DIR)
 
 # 결과 저장 변수
-SPREADSHEET_NAME = "DaumApp_Result"
+SPREADSHEET_NAME = "WebAuto"
 APP_NAME = "Daum Mobile Web" # 앱 대신 모바일 웹으로 변경
 TESTER_NAME = "GitHub_Action_Bot" # 자동화 봇
 SCRIPT_NAME = os.path.basename(__file__)
