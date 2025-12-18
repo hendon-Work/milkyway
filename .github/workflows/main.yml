@@ -32,4 +32,4 @@ jobs:
     - name: Run Script
       run: |
         # 파일 앞에 '폴더이름/' 을 붙여줍니다.
-        python "tests/daum_search_v8.py
+        python "tests/daum_search_v8.py"
