@@ -2,3 +2,4 @@ pandas
 requests
 selenium
 pillow
+Appium-Python-Client
