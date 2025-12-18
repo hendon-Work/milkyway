@@ -31,5 +31,4 @@ jobs:
     # 현재는 버전 확인만 하지만, 나중에 실행할 파일명(예: main.py)으로 바꾸면 됩니다.
     - name: Run Script
       run: |
-        echo "라이브러리 설치가 완료되었습니다!"
-        python --version
+        python main.py
