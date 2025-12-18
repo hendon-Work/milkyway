@@ -15,11 +15,11 @@ jobs:
     # 1. 저장소의 코드를 내려받습니다.
     - uses: actions/checkout@v3
 
-    # 2. 파이썬을 설치합니다 (버전 3.9)
-    - name: Set up Python 3.9
+    # 2. 파이썬을 설치합니다 (버전 3.11)
+    - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: "3.9"
+        python-version: "3.11"
 
     # 3. 작성하신 requirements.txt를 읽어서 라이브러리들을 설치합니다.
     - name: Install dependencies

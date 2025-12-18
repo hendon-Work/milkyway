@@ -60,7 +60,7 @@ element_interaction_timeout = 15 # 동작 최대 시간
 long_interaction_timeout = 30 # 상호작용 최대 시간
 
 # --- 로그 및 스크린샷 저장을 위한 디렉토리 설정 ---
-LOG_ARTIFACTS_DIR = os.path.join(os.getcwd(), "logs")
+LOG_ARTIFACTS_DIR = "/Users/jayden.coys/Autotest/fail_log" 
 
 if not os.path.exists(LOG_ARTIFACTS_DIR):
     os.makedirs(LOG_ARTIFACTS_DIR)
