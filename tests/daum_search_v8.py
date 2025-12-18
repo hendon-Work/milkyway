@@ -8,6 +8,7 @@ from selenium.webdriver.common.actions.pointer_input import PointerInput
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
+from selenium.webdriver.common.keys import Keys
 
 from datetime import datetime, timedelta
 import getpass
@@ -16,10 +17,11 @@ import traceback
 import os
 import requests  # 알림 전송
 
-# --- 구글 시트 및 AI 라이브러리 (기존 유지) ---
+# --- 구글 시트 및 AI 라이브러리 ---
 import json
 import gspread
-from google.oauth2.service_account import Credentials
+# [수정] 구글 시트 인증을 위한 라이브러리 추가
+from oauth2client.service_account import ServiceAccountCredentials 
 import google.generativeai as genai
 
 # --- Pillow 라이브러리 ---
@@ -73,17 +75,14 @@ run_start_time = None
 run_end_time = None
 
 # -----------------------------------------------------------------------------
-# 함수 정의 (웹 환경에 맞게 수정됨)
+# 함수 정의
 # -----------------------------------------------------------------------------
 
-# Gemini 분석 함수 (기존 유지)
+# Gemini 분석 함수
 def analyze_failure_with_gemini(screenshot_path, error_message):
     API_KEY = "AIzaSyB6GbtgJPG8APdyTQqey7R8lAVbWn4JQCs" # [주의] 실제 키 보안 유의
     if not API_KEY or "YOUR_API_KEY" in API_KEY:
         return "API Key 누락"
-    
-    # ... (기존 로직 유지) ...
-    # API 키가 노출되면 GitHub에서 차단될 수 있으므로, 실제 운영 시에는 Secrets 사용 권장
     return "Gemini 분석 건너뜀 (Secrets 설정 필요)"
 
 def log_test_result(driver, number, category, depth1, depth2, depth3, depth4, depth5, depth6, depth7, Pre, description, result, exception_obj=None):
@@ -105,8 +104,6 @@ def log_test_result(driver, number, category, depth1, depth2, depth3, depth4, de
             screenshot_path = os.path.join(LOG_ARTIFACTS_DIR, f"{base_filename}.png")
             driver.save_screenshot(screenshot_path)
             print(f"📸 스크린샷 저장: {screenshot_path}")
-            
-            # (선택 사항) Gemini 분석 호출은 여기서 수행
         print("--- 실패 처리 종료 ---")
 
 def write_results_to_gsheet(results, dev_name, device_model, plat_ver, app_pkg, app_ver, start_ts, end_ts, tester_name, script_name):
@@ -125,8 +122,7 @@ def write_results_to_gsheet(results, dev_name, device_model, plat_ver, app_pkg, 
         creds = ServiceAccountCredentials.from_json_keyfile_name(json_file_name, scope)
         client = gspread.authorize(creds)
         
-        # 3. 시트 열기 (시트 이름이 정확해야 합니다!)
-        # 주의: 이 시트가 'Service Account 이메일'에게 공유되어 있어야 합니다.
+        # 3. 시트 열기
         spreadsheet = client.open(SPREADSHEET_NAME) 
         
         # 4. 새 워크시트 생성 (이름: 날짜_시간)
@@ -165,7 +161,6 @@ def navigate_to_home(driver):
 # -----------------------------------------------------------------------------
 try:
     print("🚀 Chrome Driver(Headless) 시작 중...")
-    # [핵심] Appium Driver 대신 Selenium Chrome Driver 사용
     driver = webdriver.Chrome(options=options)
     
     # 윈도우 크기 강제 설정 (모바일 비율)
@@ -177,25 +172,22 @@ try:
     wait = WebDriverWait(driver, element_interaction_timeout)
     long_wait = WebDriverWait(driver, long_interaction_timeout)
 
-    # 1. 웹사이트 접속 (앱 실행 대신)
+    # 1. 웹사이트 접속
     navigate_to_home(driver)
 
     case_num_counter = 1
 
     # -----------------------------------------------------------------------------
-    # 테스트 시나리오 (웹 구조에 맞춰 XPath 수정됨)
+    # 테스트 시나리오
     # -----------------------------------------------------------------------------
     
     # --- Case 1: 홈 화면 확인 ---
     category, desc = "홈 화면", "다음 모바일 웹 홈이 정상적으로 노출되는가?"
     try:
-        # 웹 로고 XPath (m.daum.net 기준)
-        logo_xpath = '//h1[@class="doc_title"]' # 또는 적절한 로고 class
-        # (주의: 다음 모바일 웹 구조에 따라 class 이름이 다를 수 있음. 일반적인 body 태그 확인으로 대체)
         wait.until(EC.presence_of_element_located((By.TAG_NAME, "body")))
         
         # 검색창 확인
-        search_input_xpath = '//input[@name="q" or @id="q"]' # 일반적인 검색창 name
+        search_input_xpath = '//input[@name="q" or @id="q"]'
         wait.until(EC.visibility_of_element_located((By.XPATH, search_input_xpath)))
         
         log_test_result(driver, str(case_num_counter), category, "-", "-", "-", "-", "-", "-", "-", "-", desc, "PASS")
@@ -204,11 +196,11 @@ try:
     case_num_counter += 1
 
     # --- Case 2: 검색어 입력 및 결과 확인 ---
-    category, desc = "검색 기능", "검색어 입력 후 결과 페이지로 이동하는가?"
+    category, desc = "검색 기능", "검색어 입력 후 결과 페이지로 이동하는가?" # [수정] 오타 ccategory -> category
     try:
         search_term = "GitHub Actions Test"
         
-        # 1. 검색창 찾기 (웹 표준 XPath 사용)
+        # 1. 검색창 찾기
         search_input = wait.until(EC.element_to_be_clickable((By.XPATH, '//input[@name="q" or @type="search"]')))
         
         # 2. 검색어 입력
@@ -217,19 +209,18 @@ try:
         search_input.send_keys(search_term)
         print(f"검색어 입력: {search_term}")
         
-        # 3. 검색 버튼 클릭 (돋보기 아이콘)
-        # 웹사이트 구조에 따라 type='submit' 또는 button 태그 찾기
-        search_btn = driver.find_element(By.XPATH, '//button[@type="submit" or contains(@class, "btn_search")]')
-        search_btn.click()
+        # 3. 엔터키 입력
+        print("⌨️ 엔터키를 입력하여 검색을 시도합니다...")
+        search_input.send_keys(Keys.ENTER)
         
-        # 4. 결과 페이지 대기
-        time.sleep(2)
-        # URL에 검색어가 포함되었는지 확인
-        if "search" in driver.current_url:
-            print("✅ 검색 결과 URL 진입 확인")
+        # 4. URL 변경 대기
+        try:
+            wait.until(EC.url_contains("search"))
+            print(f"✅ 검색 결과 URL 진입 확인: {driver.current_url}")
             log_test_result(driver, str(case_num_counter), category, "-", "-", "-", "-", "-", "-", "-", "-", desc, "PASS")
-        else:
-            raise Exception("URL이 검색 결과 페이지로 변경되지 않음")
+        except TimeoutException:
+            print(f"❌ URL 변경 감지 실패. 현재 URL: {driver.current_url}")
+            raise Exception("검색 후 URL이 변경되지 않았습니다.")
             
     except Exception as e:
         log_test_result(driver, str(case_num_counter), category, "-", "-", "-", "-", "-", "-", "-", "-", desc, "FAIL", exception_obj=e)
@@ -248,17 +239,20 @@ try:
         log_test_result(driver, str(case_num_counter), category, "-", "-", "-", "-", "-", "-", "-", "-", desc, "FAIL", exception_obj=e)
     case_num_counter += 1
 
-    # -----------------------------------------------------------------------------
-    # [안내] 기존 Appium 네이티브 테스트 케이스는 웹에서 동작하지 않아 제외했습니다.
-    # (예: 권한 팝업, 앱 스위칭, 꽃 검색 카메라 실행 등은 웹 브라우저 제어 범위를 벗어납니다.)
-    # -----------------------------------------------------------------------------
-
 except Exception as e:
     print(f"\n### 🚨 치명적 오류 발생: {e}")
     traceback.print_exc()
 
 finally:
     run_end_time = datetime.now()
+    
+    # [수정] 구글 시트 저장 함수 호출 추가
+    if test_results:
+        write_results_to_gsheet(
+            test_results, device_name, device_model, 
+            platform_version, "Daum Mobile Web", app_version, 
+            run_start_time, run_end_time, TESTER_NAME, SCRIPT_NAME
+        )
     
     # 드라이버 종료
     if driver:
